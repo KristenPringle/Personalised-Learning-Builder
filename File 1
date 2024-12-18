@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalised Learning Builder</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #0073e6;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        header img {
+            max-width: 100px;
+            display: block;
+            margin: 0 auto 10px;
+        }
+        .container {
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 1200px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            margin-bottom: 10px;
+            color: #0073e6;
+        }
+        .dropdown, .textarea, .text-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .button {
+            background-color: #0073e6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #005bb5;
+        }
+        .plan-output {
+            padding: 10px;
+            border: 1px dashed #ccc;
+            background: #f9f9f9;
+            margin-top: 20px;
+        }
+        .save-button, .export-button {
+            margin-right: 10px;
+        }
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        .checkbox-container {
+            margin: 10px 0;
+        }
+        .checkbox-container label {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a3/Placeholder_logo.png" alt="Muswellbrook High School Logo">
+    <h1>Personalised Learning Builder</h1>
+    <h2>Inclusion and Support Faculty</h2>
+</header>
+
+<div class="container">
+    <!-- Teacher and Student Information -->
+    <div class="section">
+        <h2>Teacher and Student Information</h2>
+        <input type="text" id="teacherName" class="text-input" placeholder="Enter Teacher's Name">
+        <input type="text" id="studentName" class="text-input" placeholder="Enter Student's Name">
+        <input type="text" id="studentYear" class="text-input" placeholder="Enter Student's Year">
+        <input type="text" id="termWeeks" class="text-input" placeholder="Enter Term and Weeks (e.g., Term 1, Weeks 1-10)">
+    </div>
+
+    <!-- Student Profile Section -->
+    <div class="section">
+        <h2>Student Profile</h2>
+        <textarea id="studentProfile" class="textarea" placeholder="Enter student strengths, challenges, and accommodations..."></textarea>
+    </div>
+
+    <!-- Select Stage -->
+    <div class="section">
+        <h2>Select Stages</h2>
+        <select id="stageDropdown" class="dropdown" multiple>
+            <option value="Early Stage 1">Early Stage 1</option>
+            <option value="Stage 1">Stage 1</option>
+            <option value="Stage 2">Stage 2</option>
+            <option value="Stage 3">Stage 3</option>
+            <option value="Stage 4">Stage 4</option>
+            <option value="Stage 5">Stage 5</option>
+            <option value="Stage 6">Stage 6</option>
+            <option value="Life Skills">Life Skills</option>
+        </select>
+    </div>
+
+    <!-- Select Syllabus and Outcomes -->
+    <div class="section">
+        <h2>Select Syllabus and Outcomes</h2>
+        <div>
+            <label for="syllabusDropdown">Select Syllabus:</label>
+            <select id="syllabusDropdown" class="dropdown">
+                <option value="">-- Select Syllabus --</option>
+                <option value="English">English</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Science">Science</option>
+                <option value="History">History</option>
+                <option value="Geography">Geography</option>
+                <option value="Life Skills">Life Skills</option>
+            </select>
+        </div>
+        <div id="outcomeCheckboxContainer" class="checkbox-container">
+            <!-- Checkbox outcomes will dynamically load here -->
+        </div>
+    </div>
+
+    <!-- Add Activities -->
+    <div class="section">
+        <h2>Add Activities</h2>
+        <textarea id="activityTextarea" class="textarea" placeholder="Enter activities and strategies for this outcome..."></textarea>
+        <button class="button" onclick="addActivityModification()">Show Activity Modifications</button>
+        <div id="activityModifications" style="margin-top: 10px; font-style: italic; color: #555;"></div>
+    </div>
+
+    <!-- Generate Program Button -->
+    <div class="section">
+        <button class="button" onclick="generateProgram()">Generate Program</button>
+        <button class="button save-button" onclick="saveProgram()">Save Program</button>
+        <button class="button export-button" onclick="exportProgram()">Export as PDF</button>
+    </div>
+
+    <!-- Output Section -->
+    <div class="section">
+        <h2>Your Program</h2>
+        <div id="programOutput" class="plan-output">Select stages, outcomes, and add activities to see your program here.</div>
+    </div>
+
+    <!-- Progress Dashboard -->
+    <div class="section">
+        <h2>Progress Dashboard</h2>
+        <canvas id="progressChart" class="chart-container"></canvas>
+        <button class="button" onclick="updateProgress()">Update Progress</button>
+    </div>
+</div>
+
+<script>
+    let savedPrograms = [];
+    const outcomesBySyllabusAndStage = {
+        "English": {
+            "Early Stage 1": [
+                "ENe-01: Engages with texts",
+                "ENe-02: Identifies basic language features"
+            ],
+            "Stage 6": [
+                "ENG-6-01: Compose advanced argumentative texts",
+                "ENG-6-02: Critically evaluate complex narratives"
+            ]
+        },
+        "Mathematics": {
+            "Early Stage 1": [
+                "MAe-01: Explores number concepts",
+                "MAe-02: Recognizes patterns"
+            ],
+            "Stage 6": [
+                "MATH-6-01: Solve advanced calculus problems",
+                "MATH-6-02: Apply statistical methods"
+            ]
+        },
+        "Life Skills": {
+            "Stage 6": ["LS-6-01: Engage with community supports"]
+        }
+    };
+
+    document.getElementById('syllabusDropdown').addEventListener('change', updateOutcomes);
+    document.getElementById('stageDropdown').addEventListener('change', updateOutcomes);
+
+    function updateOutcomes() {
+        const syllabus = document.getElementById('syllabusDropdown').value;
+        const stages = Array.from(document.getElementById('stageDropdown').selectedOptions).map(option => option.value);
+
+        const outcomeContainer = document.getElementById('outcomeCheckboxContainer');
+        outcomeContainer.innerHTML = '';
+
+        if (syllabus && stages.length > 0) {
+            stages.forEach(stage => {
+                if (outcomesBySyllabusAndStage[syllabus] && outcomesBySyllabusAndStage[syllabus][stage]) {
+                    outcomesBySyllabusAndStage[syllabus][stage].forEach(outcome => {
+                        const label = document.createElement('label');
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = outcome;
+                        checkbox.name = 'outcomeCheckbox';
+                        label.appendChild(checkbox);
+                        label.appendChild(document.createTextNode(outcome));
+                        outcomeContainer.appendChild(label);
+                    });
+                }
+            });
+        } else {
+            outcomeContainer.innerHTML = '<p style="color: red;">Please select a syllabus and at least one stage to view outcomes.</p>';
+        }
+
+        console.log("Syllabus: ", syllabus, "Stages: ", stages); // Debugging
+    }
+
+    function generateProgram() {
+        const teacherName = document.getElementById('teacherName').value;
+        const studentName = document.getElementById('studentName').value;
+        const studentYear = document.getElementById('studentYear').value;
+        const termWeeks = document.getElementById('termWeeks').value;
+        const stages = Array.from(document.getElementById('stageDropdown').selectedOptions).map(option => option.value);
+        const outcomes = Array.from(document.getElementsByName('outcomeCheckbox'))
+            .filter(checkbox => checkbox.checked)
+            .map(checkbox => checkbox.value);
+        const activity = document.getElementById('activityTextarea').value;
+        const profile = document.getElementById('studentProfile').value;
+
+        if (!teacherName || !studentName || !studentYear || !termWeeks || stages.length === 0 || outcomes.length ===
